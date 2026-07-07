@@ -31,10 +31,12 @@ app.get("/app", (req, res) => {
 
 
 
-// Importing and using user routes
+// Importing routes
 import userRouter from './routes/user.routes.js';
+import videoRouter from './routes/video.routes.js';
 
 //routes declaration 
 app.use("/api/v1/users",userRouter);
+app.use("/api/v1/videos",videoRouter);
 //http://localhost:8000/api/v1/users/register this is the endpoint to register a user, and it will respond with a JSON message indicating that the user was registered successfully.
 export default app;

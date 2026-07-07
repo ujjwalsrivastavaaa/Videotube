@@ -1,78 +1,75 @@
-import React, { useState } from 'react';
-import { Home, User as UserIcon, History, LogOut, Search, Play, Heart, Users, Video } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-
-const MOCK_VIDEOS = [
-  {
-    id: 1,
-    title: "Building a Glassmorphic React UI from Scratch",
-    author: "CodeVibe",
-    views: "124K views",
-    time: "2 days ago",
-    duration: "18:42",
-    thumbnail: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
-  },
-  {
-    id: 2,
-    title: "Advanced NodeJS & Express Backend Architecture",
-    author: "Chai & Code",
-    views: "340K views",
-    time: "1 week ago",
-    duration: "45:10",
-    thumbnail: "https://images.unsplash.com/photo-1627398242454-45a1465c2079?auto=format&fit=crop&w=600&q=80",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
-  },
-  {
-    id: 3,
-    title: "How to deploy Docker Containers to AWS ECS",
-    author: "DevOps Zone",
-    views: "89K views",
-    time: "3 days ago",
-    duration: "12:15",
-    thumbnail: "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?auto=format&fit=crop&w=600&q=80",
-    avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=100&q=80"
-  },
-  {
-    id: 4,
-    title: "The Future of Web Development in 2026",
-    author: "Tech Vision",
-    views: "1.2M views",
-    time: "3 weeks ago",
-    duration: "22:05",
-    thumbnail: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80",
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80"
-  },
-  {
-    id: 5,
-    title: "Complete MongoDB Aggregation Pipeline Tutorial",
-    author: "Query Master",
-    views: "45K views",
-    time: "5 days ago",
-    duration: "30:40",
-    thumbnail: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=600&q=80",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80"
-  },
-  {
-    id: 6,
-    title: "Designing Fluid UI Animations with CSS Variables",
-    author: "Motion Labs",
-    views: "210K views",
-    time: "1 month ago",
-    duration: "14:55",
-    thumbnail: "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=600&q=80",
-    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=100&q=80"
-  }
-];
+import React, { useState, useEffect } from 'react';
+import { Home, User as UserIcon, History, LogOut, Search, Play, PlusCircle, Trash2, Video, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { apiRequest } from '../../utils/api';
+import UploadModal from '../../components/UploadModal';
+import VideoPlayerModal from '../../components/VideoPlayerModal';
 
 const Dashboard = ({ user, handleLogout }) => {
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
 
-  const filteredVideos = MOCK_VIDEOS.filter(video =>
-    video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    video.author.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Modals state
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+
+  const fetchVideos = async (query = '') => {
+    setLoading(true);
+    setError('');
+    try {
+      const endpoint = query ? `/videos?query=${encodeURIComponent(query)}` : '/videos';
+      const response = await apiRequest(endpoint, { method: 'GET' });
+      if (response && response.data) {
+        setVideos(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to load videos:', err.message);
+      setError('Could not load streams from server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch videos on mount and search query changes
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchVideos(searchQuery);
+    }, 400); // Debounce searches to reduce network spam
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleVideoClick = async (video) => {
+    try {
+      // Trigger GET /videos/:videoId to register watch/increment views
+      const response = await apiRequest(`/videos/${video._id}`, { method: 'GET' });
+      if (response && response.data) {
+        // Open player with latest details
+        setSelectedVideo(response.data);
+        // Refresh video list to update view count in background
+        fetchVideos(searchQuery);
+      }
+    } catch (err) {
+      console.error('Failed to register watch:', err.message);
+      // Fallback: open with existing details
+      setSelectedVideo(video);
+    }
+  };
+
+  const handleDeleteVideo = async (e, videoId) => {
+    e.stopPropagation(); // Avoid triggering video click
+    if (!window.confirm('Are you sure you want to delete this video?')) return;
+
+    try {
+      await apiRequest(`/videos/${videoId}`, { method: 'DELETE' });
+      // Reload list
+      fetchVideos(searchQuery);
+    } catch (err) {
+      alert(err.message || 'Failed to delete video.');
+    }
+  };
 
   return (
     <div className="app-layout">
@@ -132,55 +129,135 @@ const Dashboard = ({ user, handleLogout }) => {
             <p>Explore recommended tech videos & channels</p>
           </div>
 
-          <div className="search-bar">
-            <Search className="search-icon" size={16} />
-            <input 
-              type="text" 
-              className="search-input" 
-              placeholder="Search videos or authors..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div className="search-bar">
+              <Search className="search-icon" size={16} />
+              <input 
+                type="text" 
+                className="search-input" 
+                placeholder="Search videos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <button 
+              className="btn-primary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', width: 'auto' }}
+              onClick={() => setIsUploadOpen(true)}
+            >
+              <PlusCircle size={18} />
+              <span>Upload Video</span>
+            </button>
           </div>
         </header>
 
         {/* Video Grid */}
         <section>
           <h2 style={{ marginBottom: '24px', fontSize: '20px', fontWeight: '600' }}>Trending Videos</h2>
-          {filteredVideos.length > 0 ? (
+          {error && <div className="alert alert-danger"><AlertCircle size={16} />{error}</div>}
+          
+          {loading ? (
+            <div className="loader-container">
+              <div className="spinner"></div>
+            </div>
+          ) : videos.length > 0 ? (
             <div className="video-grid">
-              {filteredVideos.map(video => (
-                <article className="video-card" key={video.id}>
-                  <div className="video-thumbnail-container">
-                    <img src={video.thumbnail} alt={video.title} className="video-thumbnail" />
-                    <span className="video-duration">{video.duration}</span>
-                  </div>
-                  <div className="video-content">
-                    <div className="video-author-row">
-                      <img src={video.avatar} alt={video.author} className="video-author-avatar" />
-                      <div className="video-meta-info">
-                        <h4>{video.title}</h4>
-                        <p>{video.author}</p>
-                        <div className="video-stats">
-                          <span>{video.views}</span> • <span>{video.time}</span>
+              {videos.map(video => {
+                // Check ownership: owner can be populated (object) or unpopulated (string ID)
+                const isOwner = video.owner?._id 
+                  ? video.owner._id.toString() === user?._id.toString()
+                  : video.owner?.toString() === user?._id?.toString();
+
+                const minutes = Math.floor((video.duration || 0) / 60);
+                const seconds = Math.floor((video.duration || 0) % 60);
+                const formattedDuration = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                return (
+                  <article 
+                    className="video-card" 
+                    key={video._id} 
+                    onClick={() => handleVideoClick(video)}
+                    style={{ cursor: 'pointer', position: 'relative' }}
+                  >
+                    <div className="video-thumbnail-container">
+                      <img src={video.thumbnail} alt={video.title} className="video-thumbnail" />
+                      <span className="video-duration">{formattedDuration}</span>
+                      
+                      {isOwner && (
+                        <button 
+                          onClick={(e) => handleDeleteVideo(e, video._id)}
+                          style={styles.deleteButton}
+                          title="Delete Video"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="video-content">
+                      <div className="video-author-row">
+                        <img 
+                          src={video.owner?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80"} 
+                          alt="Channel Avatar" 
+                          className="video-author-avatar" 
+                        />
+                        <div className="video-meta-info" style={{ flexGrow: 1 }}>
+                          <h4 title={video.title}>{video.title}</h4>
+                          <p>@{video.owner?.username || 'unknown'}</p>
+                          <div className="video-stats">
+                            <span>{video.views} views</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <div className="empty-state">
               <Video size={48} />
-              <h3>No videos found</h3>
-              <p>Try refining your search terms.</p>
+              <h3>No videos uploaded yet</h3>
+              <p>Be the first to publish a new stream!</p>
             </div>
           )}
         </section>
       </main>
+
+      {/* Modals */}
+      <UploadModal 
+        isOpen={isUploadOpen} 
+        onClose={() => setIsUploadOpen(false)} 
+        onUploadSuccess={() => fetchVideos(searchQuery)}
+      />
+
+      <VideoPlayerModal 
+        video={selectedVideo} 
+        isOpen={!!selectedVideo} 
+        onClose={() => setSelectedVideo(null)} 
+      />
     </div>
   );
+};
+
+const styles = {
+  deleteButton: {
+    position: 'absolute',
+    top: '8px',
+    left: '8px',
+    backgroundColor: 'rgba(239, 68, 68, 0.85)',
+    border: 'none',
+    color: '#fff',
+    width: '28px',
+    height: '28px',
+    borderRadius: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    boxShadow: '0 4px 10px rgba(239, 68, 68, 0.3)',
+    transition: 'var(--transition-smooth)'
+  }
 };
 
 export default Dashboard;
