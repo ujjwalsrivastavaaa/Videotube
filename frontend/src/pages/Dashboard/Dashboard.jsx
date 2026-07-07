@@ -235,6 +235,7 @@ const Dashboard = ({ user, handleLogout }) => {
         video={selectedVideo} 
         isOpen={!!selectedVideo} 
         onClose={() => setSelectedVideo(null)} 
+        currentUser={user}
       />
     </div>
   );

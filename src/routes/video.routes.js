@@ -5,7 +5,9 @@ import {
     publishAVideo,
     getAllVideos,
     getVideoById,
-    deleteVideo
+    deleteVideo,
+    toggleLikeVideo,
+    toggleDislikeVideo
 } from '../controllers/video.controller.js';
 
 const router = Router();
@@ -32,5 +34,8 @@ router.route('/')
 router.route('/:videoId')
     .get(verifyJWT, getVideoById)
     .delete(verifyJWT, deleteVideo);
+
+router.route('/:videoId/toggle-like').post(verifyJWT, toggleLikeVideo);
+router.route('/:videoId/toggle-dislike').post(verifyJWT, toggleDislikeVideo);
 
 export default router;

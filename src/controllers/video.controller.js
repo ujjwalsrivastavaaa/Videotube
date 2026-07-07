@@ -129,9 +129,77 @@ const deleteVideo = asyncHandler(async (req, res) => {
     );
 });
 
+// @desc    Toggle Like on a video
+// @route   POST /api/v1/videos/:videoId/toggle-like
+// @access  Private
+const toggleLikeVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const userId = req.user._id;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    const hasLiked = video.likes.includes(userId);
+
+    if (hasLiked) {
+        video.likes.pull(userId);
+    } else {
+        video.likes.push(userId);
+        video.dislikes.pull(userId);
+    }
+
+    await video.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            likesCount: video.likes.length,
+            dislikesCount: video.dislikes.length,
+            isLiked: !hasLiked,
+            isDisliked: false
+        }, "Like toggled successfully")
+    );
+});
+
+// @desc    Toggle Dislike on a video
+// @route   POST /api/v1/videos/:videoId/toggle-dislike
+// @access  Private
+const toggleDislikeVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    const userId = req.user._id;
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(404, "Video not found");
+    }
+
+    const hasDisliked = video.dislikes.includes(userId);
+
+    if (hasDisliked) {
+        video.dislikes.pull(userId);
+    } else {
+        video.dislikes.push(userId);
+        video.likes.pull(userId);
+    }
+
+    await video.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            likesCount: video.likes.length,
+            dislikesCount: video.dislikes.length,
+            isLiked: false,
+            isDisliked: !hasDisliked
+        }, "Dislike toggled successfully")
+    );
+});
+
 export {
     publishAVideo,
     getAllVideos,
     getVideoById,
-    deleteVideo
+    deleteVideo,
+    toggleLikeVideo,
+    toggleDislikeVideo
 };

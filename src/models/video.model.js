@@ -34,7 +34,19 @@ const videoSchema=new Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'User',
         required:true,
-    }
+    },
+    likes:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:'User'
+        }
+    ],
+    dislikes:[
+        {
+            type:mongoose.Schema.Types.ObjectId,
+            ref:'User'
+        }
+    ]
 },{timestamps:true});
 
 videoSchema.plugin(mongooseAggregatePaginate);
