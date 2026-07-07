@@ -3,9 +3,15 @@ import { DB_NAME } from "../constants.js";
 
 const connectDB = async () => {
     try {
-        const connectioninstance = await mongoose.connect(
-            `${process.env.MONGODB_URI}/${DB_NAME}`
-        );
+        let uri = process.env.MONGODB_URI;
+        if (uri.startsWith('mongodb+srv://') || !uri.includes('?')) {
+            uri = uri.endsWith('/') ? `${uri}${DB_NAME}` : `${uri}/${DB_NAME}`;
+        } else {
+            const parts = uri.split('?');
+            uri = parts[0].endsWith('/') ? `${parts[0]}${DB_NAME}?${parts[1]}` : `${parts[0]}/${DB_NAME}?${parts[1]}`;
+        }
+
+        const connectioninstance = await mongoose.connect(uri);
 
         console.log(
             `MongoDB connected successfully: ${connectioninstance.connection.host}`
