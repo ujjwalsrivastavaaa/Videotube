@@ -369,11 +369,12 @@ const getUserChannelProfile=asyncHandler( async(req,res)=>{
     {
         $project:{
             fullName:1,
-            userame:1,
+            username:1,
             subscribersCount:1,
             channelsSubscribedToCount:1,
             avatar:1,
-            email:1
+            email:1,
+            isSubscribed:1
         }
     }
     
@@ -440,6 +441,54 @@ const getWatchhistory=asyncHandler(async(req,res)=>{
   )
 })
 
+// @desc    Toggle channel subscription
+// @route   POST /api/v1/users/toggle-subscribe/:channelId
+// @access  Private
+const toggleSubscription = asyncHandler(async (req, res) => {
+    const { channelId } = req.params;
+    const subscriberId = req.user._id;
 
+    if (channelId.toString() === subscriberId.toString()) {
+        throw new ApiError(400, "You cannot subscribe to your own channel");
+    }
 
-export {registerUser,loginUser,logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser,updateAccountDetails,updateUserAvatar,updateUserCoverImage,getUserChannelProfile,getWatchhistory};
+    const channelExists = await User.findById(channelId);
+    if (!channelExists) {
+        throw new ApiError(404, "Channel does not exist");
+    }
+
+    const existingSub = await Subscription.findOne({
+        subscriber: subscriberId,
+        channel: channelId
+    });
+
+    if (existingSub) {
+        await Subscription.findByIdAndDelete(existingSub._id);
+        return res.status(200).json(
+            new ApiResponse(200, { isSubscribed: false }, "Unsubscribed successfully")
+        );
+    } else {
+        await Subscription.create({
+            subscriber: subscriberId,
+            channel: channelId
+        });
+        return res.status(200).json(
+            new ApiResponse(200, { isSubscribed: true }, "Subscribed successfully")
+        );
+    }
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchhistory,
+    toggleSubscription
+};

@@ -18,6 +18,11 @@ const VideoPlayerModal = ({ video, isOpen, onClose, currentUser }) => {
   const [commentsError, setCommentsError] = useState('');
   const [commentSubmitting, setCommentSubmitting] = useState(false);
 
+  // Subscription state
+  const [subscribersCount, setSubscribersCount] = useState(0);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(true);
+
   // Fetch comments and initialize likes states
   useEffect(() => {
     if (!video?._id) return;
@@ -48,7 +53,41 @@ const VideoPlayerModal = ({ video, isOpen, onClose, currentUser }) => {
     };
 
     fetchComments();
+
+    // Fetch channel stats
+    const fetchChannelStats = async () => {
+      if (!video.owner?.username) return;
+      setStatsLoading(true);
+      try {
+        const response = await apiRequest(`/users/c/${video.owner.username}`, { method: 'GET' });
+        if (response && response.data) {
+          setSubscribersCount(response.data.subscribersCount || 0);
+          setIsSubscribed(response.data.isSubscribed || false);
+        }
+      } catch (err) {
+        console.error("Failed to load channel stats:", err.message);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchChannelStats();
   }, [video, currentUser]);
+
+  const handleToggleSubscribe = async () => {
+    const ownerId = video.owner?._id || video.owner;
+    if (!ownerId) return;
+
+    try {
+      const response = await apiRequest(`/users/toggle-subscribe/${ownerId}`, { method: 'POST' });
+      if (response && response.data) {
+        const subscribed = response.data.isSubscribed;
+        setIsSubscribed(subscribed);
+        setSubscribersCount(prev => subscribed ? prev + 1 : Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      alert(err.message || "Failed to toggle subscription");
+    }
+  };
 
   const handleToggleLike = async () => {
     try {
@@ -185,10 +224,28 @@ const VideoPlayerModal = ({ video, isOpen, onClose, currentUser }) => {
               alt="Owner Avatar"
               style={styles.ownerAvatar}
             />
-            <div style={styles.ownerInfo}>
-              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>{video.owner?.fullName || 'Anonymous'}</h4>
+            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{video.owner?.fullName || 'Anonymous'}</h4>
               <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)' }}>@{video.owner?.username || 'unknown'}</p>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                {statsLoading ? 'Loading subscribers...' : `${subscribersCount} subscribers`}
+              </span>
             </div>
+            {currentUser && video.owner && (video.owner._id ? video.owner._id.toString() !== currentUser._id.toString() : video.owner.toString() !== currentUser._id.toString()) ? (
+              <button
+                onClick={handleToggleSubscribe}
+                style={{
+                  ...styles.subscribeBtn,
+                  background: isSubscribed ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                  border: isSubscribed ? '1px solid var(--border-glass)' : 'none',
+                  color: '#fff'
+                }}
+              >
+                {isSubscribed ? 'Subscribed' : 'Subscribe'}
+              </button>
+            ) : (
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '4px' }}>Your Channel</span>
+            )}
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '12px', whiteSpace: 'pre-line' }}>
             {video.description}
@@ -477,6 +534,18 @@ const styles = {
     color: 'var(--text-secondary)',
     textAlign: 'center',
     padding: '20px'
+  },
+  subscribeBtn: {
+    padding: '8px 16px',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'var(--transition-smooth)',
+    fontFamily: 'var(--font-heading)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 };
 
