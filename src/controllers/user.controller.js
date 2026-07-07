@@ -390,7 +390,7 @@ const getUserChannelProfile=asyncHandler( async(req,res)=>{
 )
 
 const getWatchhistory=asyncHandler(async(req,res)=>{
-  const user=await User.agreegate(
+  const user=await User.aggregate(
     [
         {
             $match:{
@@ -407,7 +407,7 @@ const getWatchhistory=asyncHandler(async(req,res)=>{
                     {
                         $lookup:{
                             from:"users",
-                            localfield:"owner",
+                            localField:"owner",
                             foreignField:"_id",
                             as:"owner",
                             pipeline:[
