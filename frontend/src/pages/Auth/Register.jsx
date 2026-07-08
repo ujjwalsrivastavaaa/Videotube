@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../../utils/api';
-import { Upload, AlertCircle, CheckCircle, Image as ImageIcon, Camera } from 'lucide-react';
+import { AlertCircle, CheckCircle, Camera, Image as ImageIcon } from 'lucide-react';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -46,7 +46,6 @@ const Register = () => {
     setError('');
     setSuccess('');
 
-    // Basic validation
     if (!username || !email || !fullName || !password) {
       setError('Please fill in all textual fields');
       return;
@@ -85,83 +84,96 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container" style={{ minHeight: '120vh' }}>
-      <div className="auth-card" style={{ maxWidth: '520px' }}>
-        <div className="auth-header">
-          <h1>Create Account</h1>
-          <p>Register to share and vibe with streams</p>
+    <div className="flex items-center justify-center min-h-screen bg-brand-bg px-6 py-12 font-sans selection:bg-brand-accent selection:text-white">
+      <div className="w-full max-w-[480px] bg-brand-card border border-brand-border rounded-md p-8 sm:p-10 shadow-sm text-left">
+        
+        {/* Header */}
+        <div className="mb-6">
+          <Link to="/" className="flex items-center gap-2 group select-none mb-3">
+            <div className="bg-brand-accent group-hover:bg-brand-hover text-white w-7 h-7 rounded-sm flex items-center justify-center font-black text-sm tracking-tighter transition-colors">
+              VT
+            </div>
+            <span className="font-extrabold text-lg tracking-tight text-brand-text">
+              VideoTube
+            </span>
+          </Link>
+          <h1 className="text-xl font-extrabold text-brand-text tracking-tight">Create Channel Account</h1>
+          <p className="text-xs text-brand-secondary mt-1">Register to start uploading your streams on VideoTube</p>
         </div>
 
         {error && (
-          <div className="alert alert-danger">
-            <AlertCircle size={18} />
+          <div className="mb-6 p-3.5 bg-brand-danger-bg border border-brand-danger-border text-brand-accent text-xs font-semibold rounded-md flex items-center gap-2">
+            <AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="alert alert-success">
-            <CheckCircle size={18} />
+          <div className="mb-6 p-3.5 bg-brand-success-bg border border-brand-success-border text-brand-accent text-xs font-semibold rounded-md flex items-center gap-2">
+            <CheckCircle size={15} />
             <span>{success}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="fullName">Full Name</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="fullName" className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">Full Name</label>
             <input
               type="text"
               id="fullName"
-              className="form-input"
-              placeholder="e.g. John Doe"
+              placeholder="Enter your full name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={loading}
+              className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="username" className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">Username</label>
             <input
               type="text"
               id="username"
-              className="form-input"
-              placeholder="e.g. johndoe"
+              placeholder="Enter username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
+              className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="email" className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">Email Address</label>
             <input
               type="email"
               id="email"
-              className="form-input"
-              placeholder="e.g. john@example.com"
+              placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">Password</label>
             <input
               type="password"
               id="password"
-              className="form-input"
               placeholder="Min. 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
             />
           </div>
 
-          <div className="file-upload-grid">
-            {/* Avatar Uploader */}
-            <div className="file-uploader" onClick={() => avatarInputRef.current?.click()}>
+          <div className="grid grid-cols-2 gap-4 my-2">
+            {/* Avatar Input */}
+            <div 
+              onClick={() => !loading && avatarInputRef.current?.click()} 
+              className="border border-dashed border-brand-border hover:border-brand-accent hover:bg-brand-accent/5 rounded-md p-4 flex flex-col items-center justify-center min-h-[110px] cursor-pointer transition-colors text-center relative"
+            >
               <input
                 type="file"
                 ref={avatarInputRef}
@@ -172,19 +184,23 @@ const Register = () => {
               />
               {avatarPreview ? (
                 <>
-                  <img src={avatarPreview} alt="Avatar Preview" className="file-preview" />
-                  <span className="file-uploader-text" style={{ marginTop: '8px' }}>Change Avatar</span>
+                  <img src={avatarPreview} alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-brand-border" />
+                  <span className="text-[9px] font-bold text-brand-accent mt-2">Change Avatar</span>
                 </>
               ) : (
                 <>
-                  <Camera className="file-uploader-icon" size={24} />
-                  <span className="file-uploader-text">Upload Avatar *</span>
+                  <Camera size={20} className="text-brand-secondary" />
+                  <span className="text-[10px] font-bold text-brand-text mt-2">Avatar *</span>
+                  <span className="text-[9px] text-brand-secondary mt-0.5">Profile image</span>
                 </>
               )}
             </div>
 
-            {/* Cover Image Uploader */}
-            <div className="file-uploader" onClick={() => coverInputRef.current?.click()}>
+            {/* Cover Image Input */}
+            <div 
+              onClick={() => !loading && coverInputRef.current?.click()} 
+              className="border border-dashed border-brand-border hover:border-brand-accent hover:bg-brand-accent/5 rounded-md p-4 flex flex-col items-center justify-center min-h-[110px] cursor-pointer transition-colors text-center relative"
+            >
               <input
                 type="file"
                 ref={coverInputRef}
@@ -195,25 +211,30 @@ const Register = () => {
               />
               {coverPreview ? (
                 <>
-                  <img src={coverPreview} alt="Cover Preview" className="file-preview rect" />
-                  <span className="file-uploader-text" style={{ marginTop: '8px' }}>Change Cover</span>
+                  <img src={coverPreview} alt="Cover" className="w-16 h-10 object-cover rounded-sm border border-brand-border" />
+                  <span className="text-[9px] font-bold text-brand-accent mt-2">Change Cover</span>
                 </>
               ) : (
                 <>
-                  <ImageIcon className="file-uploader-icon" size={24} />
-                  <span className="file-uploader-text">Cover Image (Optional)</span>
+                  <ImageIcon size={20} className="text-brand-secondary" />
+                  <span className="text-[10px] font-bold text-brand-text mt-2">Cover Banner</span>
+                  <span className="text-[9px] text-brand-secondary mt-0.5">Optional</span>
                 </>
               )}
             </div>
           </div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-brand-accent hover:bg-brand-hover text-white text-xs font-bold py-2.5 px-4 rounded-md transition-colors cursor-pointer flex items-center justify-center mt-2"
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
-        <div className="auth-footer">
-          Already have an account? <Link to="/login">Sign in</Link>
+        <div className="mt-8 text-center text-xs text-brand-secondary border-t border-brand-border/60 pt-6">
+          Already have an account? <Link to="/login" className="text-brand-accent font-semibold hover:underline">Sign in</Link>
         </div>
       </div>
     </div>

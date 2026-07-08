@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { apiRequest, setAuthToken, setRefreshToken } from '../../utils/api';
-import { LogIn, Key, Mail, User, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 const Login = ({ setUser }) => {
   const [identifier, setIdentifier] = useState(''); // username or email
@@ -21,7 +21,6 @@ const Login = ({ setUser }) => {
 
     setLoading(true);
     try {
-      // Backend expects either username or email
       const isEmail = identifier.includes('@');
       const body = {
         password,
@@ -50,54 +49,68 @@ const Login = ({ setUser }) => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h1>VibeStream</h1>
-          <p>Login to access your premium video dashboard</p>
+    <div className="flex items-center justify-center min-h-screen bg-brand-bg px-6 py-10 font-sans selection:bg-brand-accent selection:text-white">
+      <div className="w-full max-w-[450px] bg-brand-card border border-brand-border rounded-md p-8 sm:p-10 shadow-sm text-left">
+        
+        {/* Header */}
+        <div className="mb-8">
+          <Link to="/" className="flex items-center gap-2 group select-none mb-3">
+            <div className="bg-brand-accent group-hover:bg-brand-hover text-white w-7 h-7 rounded-sm flex items-center justify-center font-black text-sm tracking-tighter transition-colors">
+              VT
+            </div>
+            <span className="font-extrabold text-lg tracking-tight text-brand-text">
+              VideoTube
+            </span>
+          </Link>
+          <h1 className="text-xl font-extrabold text-brand-text tracking-tight">Welcome Back</h1>
+          <p className="text-xs text-brand-secondary mt-1">Sign in to publish streams and join the channel community</p>
         </div>
 
         {error && (
-          <div className="alert alert-danger">
-            <AlertCircle size={18} />
+          <div className="mb-6 p-3.5 bg-brand-danger-bg border border-brand-danger-border text-brand-accent text-xs font-semibold rounded-md flex items-center gap-2">
+            <AlertCircle size={15} />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="identifier">Username or Email</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="identifier" className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">Username or Email</label>
             <input
               type="text"
               id="identifier"
-              className="form-input"
-              placeholder="e.g. johndoe or john@example.com"
+              placeholder="Enter your username or email"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               disabled={loading}
+              className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="password" className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">Password</label>
             <input
               type="password"
               id="password"
-              className="form-input"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
             />
           </div>
 
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-brand-accent hover:bg-brand-hover text-white text-xs font-bold py-2.5 px-4 rounded-md transition-colors cursor-pointer flex items-center justify-center mt-2"
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        <div className="auth-footer">
-          Don't have an account? <Link to="/register">Create one now</Link>
+        <div className="mt-8 text-center text-xs text-brand-secondary border-t border-brand-border/60 pt-6">
+          Don't have an account? <Link to="/register" className="text-brand-accent font-semibold hover:underline">Create account</Link>
         </div>
       </div>
     </div>

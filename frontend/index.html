@@ -4,8 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="VibeStream - A premium dark-themed video sharing and profile dashboard built with React" />
-    <title>VibeStream - Premium Video Dashboard</title>
+    <meta name="description" content="VideoTube - A premium video sharing and profile dashboard built with React" />
+    <title>VideoTube - Premium Video Dashboard</title>
+    <script>
+      (function() {
+        try {
+          const theme = localStorage.getItem('videotube-theme') || 'system';
+          if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          console.error("Theme flicker prevention error:", e);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

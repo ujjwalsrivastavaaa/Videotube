@@ -9,7 +9,7 @@ import { uploadOnCloudinary } from '../utils/cloudinary.js';
 // @route   POST /api/v1/videos
 // @access  Private
 const publishAVideo = asyncHandler(async (req, res) => {
-    const { title, description } = req.body;
+    const { title, description, category } = req.body;
 
     if (!title?.trim() || !description?.trim()) {
         throw new ApiError(400, "Title and description are required");
@@ -18,32 +18,47 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const videoFileLocalPath = req.files?.videoFile?.[0]?.path;
     const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
-    if (!videoFileLocalPath) {
+    const isLive = category === 'Live';
+
+    if (!isLive && !videoFileLocalPath) {
         throw new ApiError(400, "Video file is required");
     }
     if (!thumbnailLocalPath) {
         throw new ApiError(400, "Thumbnail is required");
     }
 
-    // Upload to Cloudinary
-    console.log("Uploading video to Cloudinary...");
-    const videoFile = await uploadOnCloudinary(videoFileLocalPath);
+    let videoFileUrl = "";
+    let duration = 0;
+
+    if (isLive) {
+        // Set a public high-quality placeholder stream video URL (a Cloudinary demo video)
+        videoFileUrl = "https://res.cloudinary.com/demo/video/upload/w_600,h_400,c_fill/couple.mp4";
+        duration = 0;
+    } else {
+        // Upload to Cloudinary
+        console.log("Uploading video to Cloudinary...");
+        const videoFile = await uploadOnCloudinary(videoFileLocalPath);
+        if (!videoFile) {
+            throw new ApiError(400, "Failed to upload video file");
+        }
+        videoFileUrl = videoFile.url;
+        duration = videoFile.duration || 0;
+    }
+
     console.log("Uploading thumbnail to Cloudinary...");
     const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
-    if (!videoFile) {
-        throw new ApiError(400, "Failed to upload video file");
-    }
     if (!thumbnail) {
         throw new ApiError(400, "Failed to upload thumbnail image");
     }
 
     const video = await Video.create({
-        videoFile: videoFile.url,
+        videoFile: videoFileUrl,
         thumbnail: thumbnail.url,
         title,
         description,
-        duration: videoFile.duration || 0, // Cloudinary returns duration for media files
+        category: category || "All",
+        duration,
         owner: req.user._id,
         isPublished: true
     });
@@ -57,8 +72,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/videos
 // @access  Public
 const getAllVideos = asyncHandler(async (req, res) => {
-    const { query } = req.query;
-    let filter = { isPublished: true };
+    const { query, userId } = req.query;
+    let filter = {};
+
+    if (userId) {
+        filter.owner = userId;
+    } else {
+        filter.isPublished = true;
+    }
 
     if (query) {
         filter.$or = [

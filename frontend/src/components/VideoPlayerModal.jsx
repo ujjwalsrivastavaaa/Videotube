@@ -130,7 +130,6 @@ const VideoPlayerModal = ({ video, isOpen, onClose, currentUser }) => {
         body: JSON.stringify({ content: newCommentText })
       });
       if (response && response.data) {
-        // Prepend comment to show immediately on top
         setComments(prev => [response.data, ...prev]);
         setNewCommentText('');
       }
@@ -146,7 +145,6 @@ const VideoPlayerModal = ({ video, isOpen, onClose, currentUser }) => {
 
     try {
       await apiRequest(`/comments/${commentId}`, { method: 'DELETE' });
-      // Remove comment from local list
       setComments(prev => prev.filter(c => c._id !== commentId));
     } catch (err) {
       alert(err.message || "Failed to delete comment");
@@ -158,161 +156,162 @@ const VideoPlayerModal = ({ video, isOpen, onClose, currentUser }) => {
     : 'Unknown';
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal} className="auth-card">
-        {/* Close and Title */}
-        <div style={styles.header}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontFamily: 'var(--font-heading)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '85%' }}>
+    <div className="fixed inset-0 bg-brand-text/45 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+      <div className="w-full max-w-3xl bg-brand-card border border-brand-border rounded-md p-6 md:p-8 shadow-lg relative max-h-[92vh] overflow-y-auto text-left flex flex-col gap-4">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-brand-border pb-3">
+          <h2 className="font-extrabold text-sm sm:text-base text-brand-text truncate max-w-[80%]">
             {video.title}
           </h2>
-          <button onClick={onClose} style={styles.closeBtn}>
-            <X size={20} />
+          <button 
+            onClick={onClose} 
+            className="p-1 hover:bg-brand-bg rounded text-brand-secondary hover:text-brand-text transition-colors cursor-pointer"
+          >
+            <X size={18} />
           </button>
         </div>
 
         {/* Video Player */}
-        <div style={styles.playerContainer}>
+        <div className="aspect-video w-full bg-black rounded-md overflow-hidden border border-brand-border shrink-0">
           <video
             src={video.videoFile}
             controls
             autoPlay
-            style={styles.videoPlayer}
             poster={video.thumbnail}
+            className="w-full h-full object-contain"
           />
         </div>
 
-        {/* Action Row: Likes & Dislikes */}
-        <div style={styles.actionsBar}>
-          <div style={styles.metaRow}>
-            <div style={styles.metaItem}>
-              <Eye size={14} />
-              <span>{video.views} views</span>
-            </div>
-            <div style={styles.metaItem}>
-              <Calendar size={14} />
-              <span>Published on {joinedDate}</span>
-            </div>
+        {/* Action Controls & Views info */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between border-b border-brand-border pb-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brand-secondary">
+            <span className="flex items-center gap-1"><Eye size={13} />{video.views} views</span>
+            <span className="flex items-center gap-1"><Calendar size={13} />Published {joinedDate}</span>
           </div>
 
-          <div style={styles.likeDislikeGroup}>
+          <div className="flex items-center gap-1.5 bg-brand-bg border border-brand-border px-3 py-1.5 rounded-full self-start sm:self-auto">
             <button 
               onClick={handleToggleLike} 
-              style={{ ...styles.actionBtn, color: isLiked ? 'var(--primary)' : 'var(--text-secondary)' }}
-              title="Like Video"
+              className={`flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 hover:text-brand-accent transition-colors cursor-pointer ${isLiked ? 'text-brand-accent' : 'text-brand-secondary'}`}
+              title="Like video"
             >
-              <ThumbsUp size={16} fill={isLiked ? "var(--primary)" : "none"} />
+              <ThumbsUp size={14} fill={isLiked ? "currentColor" : "none"} />
               <span>{likesCount}</span>
             </button>
 
+            <span className="w-[1px] h-3 bg-brand-border"></span>
+
             <button 
               onClick={handleToggleDislike} 
-              style={{ ...styles.actionBtn, color: isDisliked ? 'var(--secondary)' : 'var(--text-secondary)' }}
-              title="Dislike Video"
+              className={`flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 hover:text-brand-accent transition-colors cursor-pointer ${isDisliked ? 'text-brand-accent' : 'text-brand-secondary'}`}
+              title="Dislike video"
             >
-              <ThumbsDown size={16} fill={isDisliked ? "var(--secondary)" : "none"} />
+              <ThumbsDown size={14} fill={isDisliked ? "currentColor" : "none"} />
               <span>{dislikesCount}</span>
             </button>
           </div>
         </div>
 
-        {/* Description Box */}
-        <div style={styles.descriptionBox}>
+        {/* Description Panel */}
+        <div className="bg-brand-bg border border-brand-border p-4 rounded-md">
           {/* Owner details */}
-          <div style={styles.ownerRow}>
+          <div className="flex items-center gap-3 border-b border-brand-border pb-3 mb-3">
             <img
               src={video.owner?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80"}
-              alt="Owner Avatar"
-              style={styles.ownerAvatar}
+              alt=""
+              className="w-9 h-9 rounded-full object-cover border border-brand-border shrink-0"
             />
-            <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{video.owner?.fullName || 'Anonymous'}</h4>
-              <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)' }}>@{video.owner?.username || 'unknown'}</p>
-              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            <div className="flex-grow min-w-0">
+              <h4 className="font-bold text-xs text-brand-text truncate leading-tight">{video.owner?.fullName || 'Anonymous'}</h4>
+              <p className="text-[10px] text-brand-secondary truncate">@{video.owner?.username || 'unknown'}</p>
+              <span className="text-[9px] text-brand-secondary font-medium">
                 {statsLoading ? 'Loading subscribers...' : `${subscribersCount} subscribers`}
               </span>
             </div>
-            {currentUser && video.owner && (video.owner._id ? video.owner._id.toString() !== currentUser._id.toString() : video.owner.toString() !== currentUser._id.toString()) ? (
+            {currentUser && video.owner && (video.owner._id ? video.owner._id !== currentUser._id : video.owner !== currentUser._id) ? (
               <button
                 onClick={handleToggleSubscribe}
-                style={{
-                  ...styles.subscribeBtn,
-                  background: isSubscribed ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                  border: isSubscribed ? '1px solid var(--border-glass)' : 'none',
-                  color: '#fff'
-                }}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
+                  isSubscribed 
+                    ? 'bg-brand-bg text-brand-secondary border-brand-border hover:bg-brand-border' 
+                    : 'bg-brand-accent text-white border-brand-accent hover:bg-brand-hover'
+                }`}
               >
                 {isSubscribed ? 'Subscribed' : 'Subscribe'}
               </button>
             ) : (
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', padding: '4px 8px', borderRadius: '4px' }}>Your Channel</span>
+              <span className="text-[9px] text-brand-secondary bg-brand-border px-2.5 py-1 rounded font-semibold">Your Channel</span>
             )}
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-primary)', marginTop: '12px', whiteSpace: 'pre-line' }}>
+          <p className="text-xs text-brand-text leading-relaxed whitespace-pre-line">
             {video.description}
           </p>
         </div>
 
-        {/* Comment Section */}
-        <div style={styles.commentsSection}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <MessageSquare size={16} />
+        {/* Comments section */}
+        <div className="flex flex-col gap-4">
+          <h3 className="font-extrabold text-xs tracking-wider text-brand-secondary uppercase flex items-center gap-2">
+            <MessageSquare size={13} />
             <span>Comments ({comments.length})</span>
           </h3>
 
           {/* Add Comment Form */}
-          <form onSubmit={handleAddComment} style={styles.commentForm}>
+          <form onSubmit={handleAddComment} className="flex gap-2">
             <input
               type="text"
-              className="form-input"
-              placeholder="Add a public comment..."
+              placeholder="Add a public comment on VideoTube..."
               value={newCommentText}
               onChange={(e) => setNewCommentText(e.target.value)}
               disabled={commentSubmitting}
-              style={{ flexGrow: 1 }}
+              className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors flex-1"
             />
-            <button type="submit" className="btn-primary" disabled={commentSubmitting || !newCommentText.trim()} style={styles.commentSendBtn}>
-              <Send size={14} />
+            <button 
+              type="submit" 
+              disabled={commentSubmitting || !newCommentText.trim()} 
+              className="px-3.5 bg-brand-accent hover:bg-brand-hover disabled:bg-brand-border text-white text-xs font-bold rounded-md transition-colors cursor-pointer flex items-center justify-center"
+            >
+              <Send size={12} />
             </button>
           </form>
 
           {/* Comments List */}
           {commentsLoading ? (
-            <div className="loader-container" style={{ padding: '20px' }}>
-              <div className="spinner" style={{ width: '24px', height: '24px' }}></div>
+            <div className="flex justify-center p-6">
+              <div className="w-5 h-5 border-2 border-brand-border border-t-brand-accent rounded-full animate-spin"></div>
             </div>
           ) : commentsError ? (
-            <div className="alert alert-danger" style={{ fontSize: '12px', padding: '8px 12px' }}>{commentsError}</div>
+            <div className="p-3 bg-red-50 border border-red-200 text-brand-accent text-xs font-semibold rounded-md flex items-center gap-2"><AlertCircle size={14} />{commentsError}</div>
           ) : comments.length > 0 ? (
-            <div style={styles.commentsList}>
+            <div className="flex flex-col gap-3 max-h-56 overflow-y-auto pr-2">
               {comments.map(comment => {
                 const commentDate = comment.createdAt 
                   ? new Date(comment.createdAt).toLocaleDateString()
                   : 'just now';
 
-                // Check comment ownership
                 const isCommentOwner = comment.owner?._id 
-                  ? comment.owner._id.toString() === currentUser?._id?.toString()
-                  : comment.owner?.toString() === currentUser?._id?.toString();
+                  ? comment.owner._id === currentUser?._id
+                  : comment.owner === currentUser?._id;
 
                 return (
-                  <div key={comment._id} style={styles.commentItem}>
+                  <div key={comment._id} className="flex gap-3 p-3.5 bg-brand-card border border-brand-border rounded-md relative items-start hover:border-brand-secondary/40 transition-colors">
                     <img
                       src={comment.owner?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=60&q=80"}
-                      alt="Avatar"
-                      style={styles.commentAvatar}
+                      alt=""
+                      className="w-7 h-7 rounded-full object-cover border border-brand-border shrink-0"
                     />
-                    <div style={styles.commentBody}>
-                      <div style={styles.commentMeta}>
-                        <span style={styles.commentAuthor}>@{comment.owner?.username || 'unknown'}</span>
-                        <span style={styles.commentDate}>{commentDate}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[11px] font-bold text-brand-text truncate">@{comment.owner?.username || 'unknown'}</span>
+                        <span className="text-[9px] text-brand-secondary">{commentDate}</span>
                       </div>
-                      <p style={styles.commentContent}>{comment.content}</p>
+                      <p className="text-xs text-brand-secondary leading-relaxed break-words">{comment.content}</p>
                     </div>
 
                     {isCommentOwner && (
                       <button
                         onClick={() => handleDeleteComment(comment._id)}
-                        style={styles.commentDeleteBtn}
+                        className="p-1 hover:bg-red-50 text-brand-accent hover:text-brand-hover rounded transition-colors self-center cursor-pointer"
                         title="Delete Comment"
                       >
                         <Trash2 size={12} />
@@ -323,230 +322,12 @@ const VideoPlayerModal = ({ video, isOpen, onClose, currentUser }) => {
               })}
             </div>
           ) : (
-            <p style={styles.noCommentsText}>No comments yet. Start the conversation!</p>
+            <p className="text-xs text-brand-secondary italic text-center py-6">No comments published yet. Be the first to share your thoughts!</p>
           )}
         </div>
       </div>
     </div>
   );
-};
-
-const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    backdropFilter: 'blur(10px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 100,
-    padding: '24px'
-  },
-  modal: {
-    width: '100%',
-    maxWidth: '760px',
-    padding: '24px',
-    borderRadius: '16px',
-    position: 'relative',
-    maxHeight: '92vh',
-    overflowY: 'auto'
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderBottom: '1px solid var(--border-glass)',
-    paddingBottom: '12px',
-    marginBottom: '16px'
-  },
-  closeBtn: {
-    background: 'none',
-    border: 'none',
-    color: 'var(--text-secondary)',
-    cursor: 'pointer',
-    padding: '4px',
-    borderRadius: '4px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'var(--transition-smooth)'
-  },
-  playerContainer: {
-    aspectRatio: '16/9',
-    width: '100%',
-    backgroundColor: '#000',
-    borderRadius: '10px',
-    overflow: 'hidden',
-    border: '1px solid var(--border-glass)'
-  },
-  videoPlayer: {
-    width: '100%',
-    height: '100%',
-    objectFit: 'contain'
-  },
-  actionsBar: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: '16px',
-    marginBottom: '16px',
-    borderBottom: '1px solid var(--border-glass)',
-    paddingBottom: '16px'
-  },
-  metaRow: {
-    display: 'flex',
-    gap: '16px',
-    fontSize: '12px',
-    color: 'var(--text-secondary)'
-  },
-  metaItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px'
-  },
-  likeDislikeGroup: {
-    display: 'flex',
-    gap: '10px',
-    background: 'rgba(255, 255, 255, 0.03)',
-    padding: '6px 12px',
-    borderRadius: '20px',
-    border: '1px solid var(--border-glass)'
-  },
-  actionBtn: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    fontSize: '12px',
-    fontWeight: '600',
-    transition: 'var(--transition-smooth)'
-  },
-  descriptionBox: {
-    background: 'rgba(255,255,255,0.02)',
-    border: '1px solid var(--border-glass)',
-    padding: '16px',
-    borderRadius: '10px',
-    marginBottom: '24px',
-    textAlign: 'left'
-  },
-  ownerRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    borderBottom: '1px solid var(--border-glass)',
-    paddingBottom: '12px',
-    marginBottom: '4px'
-  },
-  ownerAvatar: {
-    width: '38px',
-    height: '38px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    border: '2px solid var(--primary)'
-  },
-  ownerInfo: {
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  commentsSection: {
-    textAlign: 'left'
-  },
-  commentForm: {
-    display: 'flex',
-    gap: '10px',
-    marginBottom: '20px'
-  },
-  commentSendBtn: {
-    width: '40px',
-    height: '40px',
-    borderRadius: 'var(--radius-md)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 0
-  },
-  commentsList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '14px',
-    maxHeight: '300px',
-    overflowY: 'auto',
-    paddingRight: '6px'
-  },
-  commentItem: {
-    display: 'flex',
-    gap: '12px',
-    padding: '12px',
-    background: 'rgba(255, 255, 255, 0.01)',
-    borderRadius: 'var(--radius-md)',
-    border: '1px solid var(--border-glass)',
-    position: 'relative',
-    alignItems: 'flex-start'
-  },
-  commentAvatar: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    border: '1px solid var(--border-glass)'
-  },
-  commentBody: {
-    flexGrow: 1
-  },
-  commentMeta: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    marginBottom: '4px'
-  },
-  commentAuthor: {
-    fontSize: '12px',
-    fontWeight: '600',
-    color: 'var(--text-primary)'
-  },
-  commentDate: {
-    fontSize: '10px',
-    color: 'var(--text-muted)'
-  },
-  commentContent: {
-    fontSize: '13px',
-    color: 'var(--text-secondary)',
-    margin: 0
-  },
-  commentDeleteBtn: {
-    background: 'none',
-    border: 'none',
-    color: 'var(--text-muted)',
-    cursor: 'pointer',
-    padding: '4px',
-    borderRadius: '4px',
-    transition: 'var(--transition-smooth)',
-    alignSelf: 'center'
-  },
-  noCommentsText: {
-    fontSize: '13px',
-    color: 'var(--text-secondary)',
-    textAlign: 'center',
-    padding: '20px'
-  },
-  subscribeBtn: {
-    padding: '8px 16px',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'var(--transition-smooth)',
-    fontFamily: 'var(--font-heading)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  }
 };
 
 export default VideoPlayerModal;

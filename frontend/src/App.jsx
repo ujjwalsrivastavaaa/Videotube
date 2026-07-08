@@ -7,6 +7,7 @@ import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Profile from './pages/Profile/Profile';
 import WatchHistory from './pages/Dashboard/WatchHistory';
+import ChangePassword from './pages/Profile/ChangePassword';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -88,6 +89,15 @@ function App() {
           element={
             <ProtectedRoute user={user} loading={loading}>
               <Profile user={user} setUser={setUser} handleLogout={handleLogout} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/change-password" 
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <ChangePassword user={user} handleLogout={handleLogout} />
             </ProtectedRoute>
           } 
         />

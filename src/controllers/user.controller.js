@@ -350,12 +350,23 @@ const getUserChannelProfile=asyncHandler( async(req,res)=>{
         }
     },
     {
+        $lookup:{
+            from:"videos",
+            localField:"_id",
+            foreignField:"owner",
+            as:"videos"
+        }
+    },
+    {
         $addFields:{
             subscribersCount:{
                 $size:"$subscribers"
             },
             channelsSubscribedToCount:{
                 $size:"$subscribedTo"
+            },
+            totalViews:{
+                $sum:"$videos.views"
             },
             isSubscribed:{
                 $cond:{
@@ -372,6 +383,7 @@ const getUserChannelProfile=asyncHandler( async(req,res)=>{
             username:1,
             subscribersCount:1,
             channelsSubscribedToCount:1,
+            totalViews:1,
             avatar:1,
             email:1,
             isSubscribed:1

@@ -30,6 +30,11 @@ const videoSchema=new Schema({
         type:Boolean,
         default:true,
     },
+    category:{
+        type:String,
+        default:'All',
+        enum:['All', 'Music', 'Gaming', 'Education', 'Podcasts', 'Live']
+    },
     owner:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'User',

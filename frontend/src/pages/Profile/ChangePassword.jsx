@@ -1,43 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Home, 
   User as UserIcon, 
   History, 
   LogOut, 
-  Video, 
+  Shield, 
   Menu, 
-  Search,
-  PlusCircle,
-  Bell
+  PlusCircle, 
+  Bell, 
+  AlertCircle, 
+  CheckCircle,
+  ArrowLeft
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../../utils/api';
 import UploadModal from '../../components/UploadModal';
 
-const WatchHistory = ({ user, handleLogout }) => {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+const ChangePassword = ({ user, handleLogout }) => {
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const response = await apiRequest('/users/history', { method: 'GET' });
-        if (response && response.data) {
-          setHistory(response.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch watch history:", err.message);
-        setError("Could not load watch history.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
 
-    fetchHistory();
-  }, []);
+    if (!oldPassword || !newPassword) {
+      setError('Please fill in both fields');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setError('New password must be at least 6 characters long');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await apiRequest('/users/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ oldPassword, newPassword })
+      });
+      setSuccess('Password updated successfully! Redirecting...');
+      setOldPassword('');
+      setNewPassword('');
+      setTimeout(() => {
+        navigate('/profile');
+      }, 1500);
+    } catch (err) {
+      setError(err.message || 'Failed to change password. Ensure old password is correct.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-height-screen bg-brand-bg flex flex-col font-sans selection:bg-brand-accent selection:text-white">
@@ -62,7 +85,7 @@ const WatchHistory = ({ user, handleLogout }) => {
           </Link>
         </div>
 
-        {/* Action Controls & Session */}
+        {/* Action Controls */}
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setIsUploadOpen(true)}
@@ -118,28 +141,24 @@ const WatchHistory = ({ user, handleLogout }) => {
               
               <Link 
                 to="/history" 
-                className="flex items-center gap-3 px-3 py-2 bg-brand-bg text-brand-accent font-semibold text-xs rounded-md transition-colors"
+                className="flex items-center gap-3 px-3 py-2 text-brand-secondary hover:text-brand-text hover:bg-brand-bg font-medium text-xs rounded-md transition-colors"
               >
                 <History size={15} />
                 <span>Watch History</span>
               </Link>
             </nav>
 
-            {/* Subscriptions Block */}
             <div className="border-t border-brand-border pt-4">
               <h3 className="px-3 text-[10px] font-bold text-brand-secondary uppercase tracking-wider mb-2">My Channel</h3>
-              {user ? (
+              {user && (
                 <div className="flex items-center gap-2 px-3 py-1.5">
                   <img src={user.avatar} className="w-5 h-5 rounded-full object-cover" alt="" />
                   <span className="text-xs text-brand-text truncate">@{user.username}</span>
                 </div>
-              ) : (
-                <p className="px-3 text-xs text-brand-secondary italic">Not Signed In</p>
               )}
             </div>
           </div>
 
-          {/* Logout Section */}
           {user && (
             <div className="border-t border-brand-border pt-4 px-2">
               <button 
@@ -154,74 +173,72 @@ const WatchHistory = ({ user, handleLogout }) => {
         </aside>
 
         {/* Content Framework Area */}
-        <main className="flex-1 p-8 max-w-4xl mx-auto w-full">
-          <header className="border-b border-brand-border pb-4 mb-8">
-            <h1 className="font-extrabold text-2xl tracking-tight text-brand-text">Watch History</h1>
-            <p className="text-xs text-brand-secondary mt-1">Review the streams you watched recently on VideoTube</p>
-          </header>
+        <main className="flex-1 p-6 md:p-8 max-w-lg mx-auto w-full text-left">
+          {/* Back button */}
+          <button 
+            onClick={() => navigate('/profile')} 
+            className="flex items-center gap-1 text-xs font-semibold text-brand-secondary hover:text-brand-text mb-6 cursor-pointer"
+          >
+            <ArrowLeft size={14} />
+            <span>Back to Creator Studio</span>
+          </button>
 
-          {loading ? (
-            <div className="flex flex-col gap-6 animate-pulse">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex gap-4 p-4 bg-brand-card border border-brand-border rounded-md">
-                  <div className="w-40 aspect-video bg-brand-border rounded shrink-0"></div>
-                  <div className="flex flex-col gap-2 w-full justify-center">
-                    <div className="h-4 bg-brand-border rounded w-2/5"></div>
-                    <div className="h-3 bg-brand-border rounded w-3/5"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="p-4 bg-brand-danger-bg border border-brand-danger-border rounded-md text-brand-accent text-xs font-semibold">
-              {error}
-            </div>
-          ) : history.length > 0 ? (
-            <div className="relative pl-8 border-l border-brand-border flex flex-col gap-10">
-              {history.map((video, index) => {
-                const watchTime = video.updatedAt 
-                  ? new Date(video.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) 
-                  : `Watched Recently`;
-                
-                return (
-                  <div className="relative group" key={video._id || index}>
-                    {/* Timeline circle marker */}
-                    <div className="absolute -left-[38px] top-1.5 w-4.5 h-4.5 rounded-full bg-brand-card border-2 border-brand-border group-hover:border-brand-accent group-hover:bg-brand-accent transition-all z-10"></div>
-                    
-                    <div className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider mb-2.5">
-                      {watchTime}
-                    </div>
-                    
-                    <div className="bg-brand-card border border-brand-border hover:border-brand-secondary rounded-md p-4 flex flex-col sm:flex-row gap-4 transition-all shadow-sm">
-                      <div className="w-full sm:w-44 aspect-video shrink-0 bg-brand-bg rounded-sm overflow-hidden border border-brand-border">
-                        <img 
-                          src={video.thumbnail || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80"} 
-                          alt={video.title} 
-                          className="w-full h-full object-cover" 
-                        />
-                      </div>
-                      <div className="flex-1 flex flex-col justify-center text-left">
-                        <h4 className="font-extrabold text-sm text-brand-text group-hover:text-brand-accent transition-colors leading-tight mb-2">
-                          {video.title}
-                        </h4>
-                        <p className="text-xs text-brand-secondary line-clamp-2 leading-relaxed">
-                          {video.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-brand-card border border-brand-border rounded-md px-6">
-              <Video className="text-brand-secondary mb-3" size={40} />
-              <h3 className="font-bold text-sm text-brand-text">No watch history found</h3>
-              <p className="text-xs text-brand-secondary mt-1 max-w-xs">
-                Start watching streams on VideoTube to populate your history timeline!
-              </p>
-            </div>
-          )}
+          {/* Settings Card */}
+          <div className="bg-brand-card border border-brand-border rounded-md p-6 sm:p-8 shadow-sm">
+            <h1 className="font-extrabold text-lg text-brand-text mb-2 flex items-center gap-2">
+              <Shield size={16} className="text-brand-accent" />
+              <span>Change Security Password</span>
+            </h1>
+            <p className="text-xs text-brand-secondary mb-6 border-b border-brand-border pb-3">Update your VideoTube account password below</p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-brand-danger-bg border border-brand-danger-border text-brand-accent text-xs font-semibold rounded-md flex items-center gap-2">
+                <AlertCircle size={14} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-4 p-3 bg-brand-success-bg border border-brand-success-border text-brand-accent text-xs font-semibold rounded-md flex items-center gap-2">
+                <CheckCircle size={14} />
+                <span>{success}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">Current Password</label>
+                <input 
+                  type="password" 
+                  className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
+                  placeholder="••••••••"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-brand-secondary uppercase tracking-wider">New Password</label>
+                <input 
+                  type="password" 
+                  className="bg-brand-bg border border-brand-border focus:border-brand-text focus:outline-none rounded-md px-3 py-2 text-xs transition-colors"
+                  placeholder="Min. 6 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-brand-accent hover:bg-brand-hover text-white text-xs font-bold py-2.5 px-4 rounded-md transition-colors cursor-pointer flex items-center justify-center mt-2"
+              >
+                {loading ? 'Updating password...' : 'Update Password'}
+              </button>
+            </form>
+          </div>
         </main>
       </div>
 
@@ -234,4 +251,4 @@ const WatchHistory = ({ user, handleLogout }) => {
   );
 };
 
-export default WatchHistory;
+export default ChangePassword;
